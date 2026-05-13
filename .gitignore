@@ -1,0 +1,20 @@
+# Maven
+target/
+*.class
+*.jar
+*.war
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+
+# Frontend
+atlas-frontend/node_modules/
+atlas-frontend/dist/
+
+# Environment
+.env
+.env.local
+*.log

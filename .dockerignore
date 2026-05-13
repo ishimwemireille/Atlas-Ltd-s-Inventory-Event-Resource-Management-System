@@ -1,0 +1,5 @@
+target
+atlas-frontend/node_modules
+atlas-frontend/dist
+.env
+*.log
