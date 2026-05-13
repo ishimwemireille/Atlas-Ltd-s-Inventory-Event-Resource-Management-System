@@ -89,8 +89,10 @@ export default function AllocationList() {
               <th>#</th>
               <th>Equipment</th>
               <th>Category</th>
-              <th>Qty Allocated</th>
+              <th>Qty</th>
               <th>Status</th>
+              <th>Deployed On</th>
+              <th>Returned On</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -102,6 +104,16 @@ export default function AllocationList() {
                 <td>{allocation.equipment?.category?.name ?? '—'}</td>
                 <td>{allocation.quantityAllocated}</td>
                 <td><StatusBadge status={allocation.allocationStatus} /></td>
+                <td style={{ fontSize: '12px', color: '#555' }}>
+                  {allocation.deployedAt
+                    ? new Date(allocation.deployedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+                    : '—'}
+                </td>
+                <td style={{ fontSize: '12px', color: '#555' }}>
+                  {allocation.returnedAt
+                    ? new Date(allocation.returnedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+                    : '—'}
+                </td>
                 <td>
                   {allocation.allocationStatus === 'RESERVED' && (
                     <button
@@ -129,11 +141,6 @@ export default function AllocationList() {
         </table>
       )}
 
-      <div className="pattern-note">
-        <strong>State Pattern in action:</strong> Deploy button triggers RESERVED → DEPLOYED.
-        Return button triggers DEPLOYED → IN_STOCK. Each transition is enforced server-side
-        through <code>equipment.deploy()</code> and <code>equipment.returnStock()</code>.
-      </div>
     </div>
   );
 }

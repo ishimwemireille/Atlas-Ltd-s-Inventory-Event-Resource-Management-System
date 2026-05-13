@@ -1,5 +1,6 @@
 package rw.auca.atlas.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -97,6 +98,7 @@ public class AllocationService {
     equipmentRepository.save(equipment);
 
     allocation.setAllocationStatus(AllocationStatus.DEPLOYED);
+    allocation.setDeployedAt(LocalDateTime.now());
     allocationRepository.save(allocation);
   }
 
@@ -115,6 +117,7 @@ public class AllocationService {
     equipmentRepository.save(equipment);
 
     allocation.setAllocationStatus(AllocationStatus.RETURNED);
+    allocation.setReturnedAt(LocalDateTime.now());
     allocationRepository.save(allocation);
   }
 

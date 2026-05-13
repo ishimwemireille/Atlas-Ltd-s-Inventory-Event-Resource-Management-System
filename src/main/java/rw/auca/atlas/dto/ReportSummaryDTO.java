@@ -27,6 +27,10 @@ public class ReportSummaryDTO {
   // Users
   private long totalUsers;
 
+  // Sales
+  private long totalSales;
+  private long totalUnitsSold;
+
   public ReportSummaryDTO() {}
 
   // ── Getters & Setters ──────────────────────────────────────────────────────
@@ -78,4 +82,10 @@ public class ReportSummaryDTO {
 
   public long getTotalUsers()            { return totalUsers; }
   public void setTotalUsers(long v)      { this.totalUsers = v; }
+
+  public long getTotalSales()            { return totalSales; }
+  public void setTotalSales(long v)      { this.totalSales = v; }
+
+  public long getTotalUnitsSold()        { return totalUnitsSold; }
+  public void setTotalUnitsSold(long v)  { this.totalUnitsSold = v; }
 }

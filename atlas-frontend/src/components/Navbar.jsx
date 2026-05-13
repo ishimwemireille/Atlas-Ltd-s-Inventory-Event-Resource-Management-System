@@ -46,6 +46,11 @@ export default function Navbar() {
             </NavLink>
           </li>
         )}
+        <li>
+          <NavLink to="/sales" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
+            Sales
+          </NavLink>
+        </li>
         {user?.role === 'ADMIN' && (
           <li>
             <NavLink to="/reports" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>

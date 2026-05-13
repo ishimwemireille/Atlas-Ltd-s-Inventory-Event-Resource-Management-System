@@ -11,7 +11,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
@@ -36,7 +35,6 @@ public class Event {
   private String venue;
 
   @NotNull(message = "Event date is required")
-  @FutureOrPresent(message = "Event date cannot be in the past")
   @Column(nullable = false)
   private LocalDate eventDate;
 

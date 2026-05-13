@@ -10,10 +10,12 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import java.time.LocalDateTime;
 
 /**
  * Represents a piece of equipment owned by Atlas Turbo LTD.
@@ -53,6 +55,14 @@ public class Equipment {
   @Column(nullable = false)
   private EquipmentStatus status = EquipmentStatus.IN_STOCK;
 
+  @Column(updatable = false)
+  private LocalDateTime createdAt;
+
+  @PrePersist
+  protected void onCreate() {
+    createdAt = LocalDateTime.now();
+  }
+
   public Equipment() {}
 
   // ── Getters & Setters ──────────────────────────────────────────────────────
@@ -77,6 +87,8 @@ public class Equipment {
 
   public EquipmentStatus getStatus() { return status; }
   public void setStatus(EquipmentStatus status) { this.status = status; }
+
+  public LocalDateTime getCreatedAt() { return createdAt; }
 
   // ── State Pattern methods ──────────────────────────────────────────────────
 

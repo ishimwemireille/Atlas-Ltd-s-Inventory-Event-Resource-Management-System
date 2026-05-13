@@ -10,6 +10,7 @@ import rw.auca.atlas.dto.AllocationReportDTO;
 import rw.auca.atlas.dto.EquipmentReportDTO;
 import rw.auca.atlas.dto.EventReportDTO;
 import rw.auca.atlas.dto.ReportSummaryDTO;
+import rw.auca.atlas.dto.SaleReportDTO;
 import rw.auca.atlas.service.ReportService;
 
 /**
@@ -57,5 +58,11 @@ public class ReportController {
   @GetMapping("/allocations")
   public ResponseEntity<List<AllocationReportDTO>> getAllocationsReport() {
     return ResponseEntity.ok(reportService.getAllocationsReport());
+  }
+
+  /** Full sales history — equipment sold and removed from inventory. */
+  @GetMapping("/sales")
+  public ResponseEntity<List<SaleReportDTO>> getSalesReport() {
+    return ResponseEntity.ok(reportService.getSalesReport());
   }
 }

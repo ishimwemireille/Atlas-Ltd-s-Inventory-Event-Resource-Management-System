@@ -12,6 +12,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 
 /**
  * Association class linking Equipment to an Event for a given quantity.
@@ -42,6 +43,9 @@ public class EquipmentAllocation {
   @Column(nullable = false)
   private AllocationStatus allocationStatus = AllocationStatus.RESERVED;
 
+  private LocalDateTime deployedAt;
+  private LocalDateTime returnedAt;
+
   public EquipmentAllocation() {}
 
   public Long getId() { return id; }
@@ -58,4 +62,10 @@ public class EquipmentAllocation {
 
   public AllocationStatus getAllocationStatus() { return allocationStatus; }
   public void setAllocationStatus(AllocationStatus allocationStatus) { this.allocationStatus = allocationStatus; }
+
+  public LocalDateTime getDeployedAt() { return deployedAt; }
+  public void setDeployedAt(LocalDateTime deployedAt) { this.deployedAt = deployedAt; }
+
+  public LocalDateTime getReturnedAt() { return returnedAt; }
+  public void setReturnedAt(LocalDateTime returnedAt) { this.returnedAt = returnedAt; }
 }

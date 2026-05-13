@@ -7,14 +7,15 @@ import rw.auca.atlas.dto.AllocationReportDTO;
 import rw.auca.atlas.dto.EquipmentReportDTO;
 import rw.auca.atlas.dto.EventReportDTO;
 import rw.auca.atlas.dto.ReportSummaryDTO;
+import rw.auca.atlas.dto.SaleReportDTO;
 import rw.auca.atlas.model.AllocationStatus;
 import rw.auca.atlas.model.EquipmentAllocation;
 import rw.auca.atlas.model.EquipmentStatus;
-import rw.auca.atlas.model.Event;
 import rw.auca.atlas.model.EventStatus;
 import rw.auca.atlas.repository.AllocationRepository;
 import rw.auca.atlas.repository.EquipmentRepository;
 import rw.auca.atlas.repository.EventRepository;
+import rw.auca.atlas.repository.SaleRepository;
 import rw.auca.atlas.repository.UserRepository;
 
 /**
@@ -25,19 +26,22 @@ import rw.auca.atlas.repository.UserRepository;
 @Service
 public class ReportService {
 
-  private final EquipmentRepository equipmentRepository;
-  private final EventRepository     eventRepository;
+  private final EquipmentRepository  equipmentRepository;
+  private final EventRepository      eventRepository;
   private final AllocationRepository allocationRepository;
-  private final UserRepository      userRepository;
+  private final UserRepository       userRepository;
+  private final SaleRepository       saleRepository;
 
   public ReportService(EquipmentRepository equipmentRepository,
       EventRepository eventRepository,
       AllocationRepository allocationRepository,
-      UserRepository userRepository) {
+      UserRepository userRepository,
+      SaleRepository saleRepository) {
     this.equipmentRepository  = equipmentRepository;
     this.eventRepository      = eventRepository;
     this.allocationRepository = allocationRepository;
     this.userRepository       = userRepository;
+    this.saleRepository       = saleRepository;
   }
 
   // ── Summary / Dashboard Stats ──────────────────────────────────────────────
@@ -69,6 +73,11 @@ public class ReportService {
 
     // User stats
     dto.setTotalUsers(userRepository.count());
+
+    // Sales stats
+    var allSales = saleRepository.findAll();
+    dto.setTotalSales(allSales.size());
+    dto.setTotalUnitsSold(allSales.stream().mapToLong(s -> s.getQuantitySold()).sum());
 
     return dto;
   }
@@ -122,6 +131,25 @@ public class ReportService {
       dto.setEventVenue(alloc.getEvent().getVenue());
       dto.setQuantityAllocated(alloc.getQuantityAllocated());
       dto.setStatus(alloc.getAllocationStatus().name());
+      return dto;
+    }).collect(Collectors.toList());
+  }
+
+  // ── Sales Report ───────────────────────────────────────────────────────────
+
+  public List<SaleReportDTO> getSalesReport() {
+    return saleRepository.findAllByOrderBySaleDateDesc().stream().map(sale -> {
+      SaleReportDTO dto = new SaleReportDTO();
+      dto.setId(sale.getId());
+      dto.setEquipmentName(sale.getEquipment().getName());
+      String cat = (sale.getEquipment().getCategory() != null)
+          ? sale.getEquipment().getCategory().getName() : "—";
+      dto.setCategoryName(cat);
+      dto.setQuantitySold(sale.getQuantitySold());
+      dto.setSaleDate(sale.getSaleDate());
+      dto.setBuyerName(sale.getBuyerName());
+      dto.setNotes(sale.getNotes());
+      dto.setRecordedAt(sale.getRecordedAt());
       return dto;
     }).collect(Collectors.toList());
   }

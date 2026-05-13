@@ -13,6 +13,7 @@ import AllocationForm from './pages/AllocationForm.jsx';
 import AllocationList from './pages/AllocationList.jsx';
 import UserManagement from './pages/UserManagement.jsx';
 import Reports from './pages/Reports.jsx';
+import Sales from './pages/Sales.jsx';
 
 export default function App() {
   return (
@@ -37,6 +38,7 @@ export default function App() {
                     <Route path="/allocations" element={<AllocationForm />} />
                     <Route path="/allocations/event/:eventId" element={<AllocationList />} />
                     <Route path="/users" element={<UserManagement />} />
+                    <Route path="/sales" element={<Sales />} />
                     <Route path="/reports" element={<Reports />} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>

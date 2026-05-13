@@ -4,12 +4,14 @@ import {
   getEquipmentReport,
   getEventsReport,
   getAllocationsReport,
+  getSalesReport,
 } from '../api/apiService';
 
 const TABS = [
   { key: 'equipment',   label: 'Equipment Report' },
   { key: 'events',      label: 'Events Report' },
   { key: 'allocations', label: 'Allocations Report' },
+  { key: 'sales',       label: 'Sales Report' },
 ];
 
 export default function Reports() {
@@ -18,6 +20,7 @@ export default function Reports() {
   const [equipment, setEquipment]       = useState([]);
   const [events, setEvents]             = useState([]);
   const [allocations, setAllocations]   = useState([]);
+  const [sales, setSales]               = useState([]);
   const [loading, setLoading]           = useState(true);
   const [error, setError]               = useState('');
   const printRef                        = useRef();
@@ -26,16 +29,18 @@ export default function Reports() {
     const load = async () => {
       try {
         setLoading(true);
-        const [s, eq, ev, al] = await Promise.all([
+        const [s, eq, ev, al, sl] = await Promise.all([
           getReportSummary(),
           getEquipmentReport(),
           getEventsReport(),
           getAllocationsReport(),
+          getSalesReport(),
         ]);
         setSummary(s);
         setEquipment(eq);
         setEvents(ev);
         setAllocations(al);
+        setSales(sl);
       } catch {
         setError('Failed to load report data. Make sure you are logged in as Admin.');
       } finally {
@@ -141,10 +146,14 @@ export default function Reports() {
             <div className="stat-sub">{summary.deployedAllocations} deployed · {summary.returnedAllocations} returned</div>
           </div>
           <div className="report-stat-card orange">
-           
             <div className="stat-value">{summary.lowStockCount}</div>
             <div className="stat-label">Low Stock Alerts</div>
             <div className="stat-sub">Equipment at ≤ 2 units available</div>
+          </div>
+          <div className="report-stat-card purple">
+            <div className="stat-value">{summary.totalSales}</div>
+            <div className="stat-label">Sales Recorded</div>
+            <div className="stat-sub">{summary.totalUnitsSold} total units sold</div>
           </div>
         </div>
       )}
@@ -250,6 +259,42 @@ export default function Reports() {
                     <td className="report-num">{ev.totalUnitsAllocated}</td>
                     <td className="report-num">{ev.deployedAllocations}</td>
                     <td className="report-num">{ev.returnedAllocations}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* ── Sales Table ── */}
+        {activeTab === 'sales' && (
+          <div className="report-table-section">
+            <h2 className="report-section-title">Sales Report <span className="report-count">{sales.length} records</span></h2>
+            <table className="report-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Equipment</th>
+                  <th>Category</th>
+                  <th>Qty Sold</th>
+                  <th>Date Sold</th>
+                  <th>Buyer</th>
+                  <th>Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sales.length === 0 && (
+                  <tr><td colSpan={7} className="report-empty">No sales recorded yet.</td></tr>
+                )}
+                {sales.map((s, i) => (
+                  <tr key={s.id}>
+                    <td className="report-id">{i + 1}</td>
+                    <td><strong>{s.equipmentName}</strong></td>
+                    <td>{s.categoryName}</td>
+                    <td className="report-num">{s.quantitySold}</td>
+                    <td>{s.saleDate}</td>
+                    <td>{s.buyerName || '—'}</td>
+                    <td>{s.notes || '—'}</td>
                   </tr>
                 ))}
               </tbody>

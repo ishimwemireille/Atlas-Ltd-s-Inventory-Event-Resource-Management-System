@@ -44,6 +44,11 @@ export const createUser = async (user) => {
   return response.data;
 };
 
+export const updateUser = async (id, user) => {
+  const response = await api.put(`/users/${id}`, user);
+  return response.data;
+};
+
 export const deleteUser = async (id) => {
   await api.delete(`/users/${id}`);
 };
@@ -141,6 +146,18 @@ export const getAllocationsByEvent = async (eventId) => {
   return response.data;
 };
 
+// ── Sales (Admin only) ────────────────────────────────────────────────────────
+
+export const getAllSales = async () => {
+  const response = await api.get('/sales');
+  return response.data;
+};
+
+export const recordSale = async (sale) => {
+  const response = await api.post('/sales', sale);
+  return response.data;
+};
+
 // ── Reports (Admin only) ──────────────────────────────────────────────────────
 
 export const getReportSummary = async () => {
@@ -160,5 +177,10 @@ export const getEventsReport = async () => {
 
 export const getAllocationsReport = async () => {
   const response = await api.get('/reports/allocations');
+  return response.data;
+};
+
+export const getSalesReport = async () => {
+  const response = await api.get('/reports/sales');
   return response.data;
 };
