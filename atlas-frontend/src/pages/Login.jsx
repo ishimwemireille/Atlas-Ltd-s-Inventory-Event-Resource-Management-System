@@ -9,18 +9,30 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  // resolve login action from auth context — persists session and updates global state
   const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    // validate input before making the API call — prevent unnecessary network requests
+    if (!username.trim() || !password.trim()) {
+      setError('Username and password are required.');
+      return;
+    }
+
     setLoading(true);
     setError('');
     try {
+      // send credentials to the backend — backend validates against BCrypt hash
       const data = await loginUser(username, password);
+      // persist token and user info in localStorage via auth context
       login(data);
+      // redirect to dashboard after successful login
       navigate('/');
     } catch (err) {
+      // show error state if API call fails — do not leak which field was wrong
       setError('Invalid username or password.');
     } finally {
       setLoading(false);
@@ -36,6 +48,7 @@ export default function Login() {
           <p className="login-subtitle">Inventory & Event Resource Management</p>
         </div>
 
+        {/* show error state if API call fails */}
         {error && <div className="error-message">{error}</div>}
 
         <form onSubmit={handleSubmit} className="form">

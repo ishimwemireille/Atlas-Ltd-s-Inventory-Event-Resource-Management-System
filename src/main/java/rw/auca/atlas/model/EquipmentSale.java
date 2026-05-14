@@ -25,28 +25,35 @@ public class EquipmentSale {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  // equipment reference is mandatory — sale must be linked to a known item
   @NotNull(message = "Equipment is required")
   @ManyToOne(fetch = FetchType.EAGER)
   @JoinColumn(name = "equipment_id", nullable = false)
+  // suppress allocations list on Equipment to avoid circular JSON
   @JsonIgnoreProperties("allocations")
   private Equipment equipment;
 
+  // at least 1 unit must be sold — quantity of 0 is invalid
   @Min(value = 1, message = "Quantity sold must be at least 1")
   @Column(nullable = false)
   private int quantitySold;
 
+  // sale date is required — used for financial reporting
   @NotNull(message = "Sale date is required")
   @Column(nullable = false)
   private LocalDate saleDate;
 
+  // buyer name and notes are optional — useful for records but not required
   private String buyerName;
   private String notes;
 
+  // auto-set timestamp via @PrePersist — not settable by client
   @Column(nullable = false, updatable = false)
   private LocalDateTime recordedAt;
 
   @PrePersist
   protected void onCreate() {
+    // capture the exact moment the sale was recorded in the system
     recordedAt = LocalDateTime.now();
   }
 

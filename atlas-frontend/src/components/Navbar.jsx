@@ -4,10 +4,12 @@ import { useAuth } from '../context/AuthContext.jsx';
 import atlasLogo from '../assets/atlas-logo.png';
 
 export default function Navbar() {
+  // resolve the current logged-in user from auth context
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
+    // clear session state then redirect to login — user cannot stay on protected pages
     logout();
     navigate('/login');
   };
@@ -39,6 +41,7 @@ export default function Navbar() {
             Allocations
           </NavLink>
         </li>
+        {/* User Management is Admin-only — hide link for Staff accounts */}
         {user?.role === 'ADMIN' && (
           <li>
             <NavLink to="/users" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
@@ -51,6 +54,15 @@ export default function Navbar() {
             Sales
           </NavLink>
         </li>
+        {/* Audit Log is Admin-only — operational trail should not be visible to Staff */}
+        {user?.role === 'ADMIN' && (
+          <li>
+            <NavLink to="/audit-log" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
+              Audit Log
+            </NavLink>
+          </li>
+        )}
+        {/* Reports are Admin-only — contains financial and operational summary data */}
         {user?.role === 'ADMIN' && (
           <li>
             <NavLink to="/reports" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>

@@ -15,12 +15,13 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
  * Represents a piece of equipment owned by Atlas Turbo LTD.
  *
- * <p>Implements the STATE PATTERN — equipment transitions through four states:
+ * Implements the STATE PATTERN — equipment transitions through four states:
  * IN_STOCK → RESERVED → DEPLOYED → IN_STOCK (via returnStock).
  * State transitions are enforced exclusively through the methods below.
  */
@@ -32,34 +33,44 @@ public class Equipment {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  // validate name is present before any persistence operation
   @NotBlank(message = "Equipment name is required")
   @Column(nullable = false)
   private String name;
 
   private String description;
 
+  // category is mandatory — orphan equipment cannot be tracked properly
   @NotNull(message = "Category is required")
   @ManyToOne(fetch = FetchType.EAGER)
   @JoinColumn(name = "category_id")
   private Category category;
 
+  // at least 1 unit must exist when creating equipment
   @Min(value = 1, message = "Total quantity must be at least 1")
   @Column(nullable = false)
   private int totalQuantity;
 
+  // available quantity can be 0 (all reserved) but never negative
   @Min(value = 0, message = "Available quantity cannot be negative")
   @Column(nullable = false)
   private int availableQuantity;
 
+  // STATE PATTERN: tracks which lifecycle state this equipment is currently in
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   private EquipmentStatus status = EquipmentStatus.IN_STOCK;
 
+  @Column(precision = 12, scale = 2)
+  private BigDecimal sellingPricePerUnit;
+
+  // auto-set timestamp via @PrePersist — not settable by client
   @Column(updatable = false)
   private LocalDateTime createdAt;
 
   @PrePersist
   protected void onCreate() {
+    // auto-populate createdAt on first insert — never accept it from the request body
     createdAt = LocalDateTime.now();
   }
 
@@ -88,6 +99,9 @@ public class Equipment {
   public EquipmentStatus getStatus() { return status; }
   public void setStatus(EquipmentStatus status) { this.status = status; }
 
+  public BigDecimal getSellingPricePerUnit() { return sellingPricePerUnit; }
+  public void setSellingPricePerUnit(BigDecimal sellingPricePerUnit) { this.sellingPricePerUnit = sellingPricePerUnit; }
+
   public LocalDateTime getCreatedAt() { return createdAt; }
 
   // ── State Pattern methods ──────────────────────────────────────────────────
@@ -100,11 +114,13 @@ public class Equipment {
    * @throws IllegalStateException if available stock is insufficient
    */
   public void reserve(int qty) {
+    // reject request early if stock is insufficient
     if (availableQuantity < qty) {
       throw new IllegalStateException(
           "Insufficient stock: requested " + qty + ", available " + availableQuantity);
     }
     availableQuantity -= qty;
+    // STATE PATTERN: reserve() transitions equipment from IN_STOCK → RESERVED when stock hits 0
     status = (availableQuantity == 0) ? EquipmentStatus.RESERVED : EquipmentStatus.IN_STOCK;
   }
 
@@ -113,6 +129,7 @@ public class Equipment {
    * Called when equipment physically leaves for an event.
    */
   public void deploy() {
+    // STATE PATTERN: deploy() transitions equipment from RESERVED → DEPLOYED
     status = EquipmentStatus.DEPLOYED;
   }
 
@@ -123,6 +140,7 @@ public class Equipment {
    * @param qty the number of units being returned
    */
   public void returnStock(int qty) {
+    // STATE PATTERN: returnStock() transitions equipment from DEPLOYED → IN_STOCK
     availableQuantity += qty;
     status = EquipmentStatus.IN_STOCK;
   }

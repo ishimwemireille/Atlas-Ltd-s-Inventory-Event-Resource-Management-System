@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { getAllSales, recordSale, getAllEquipment } from '../api/apiService.js';
 
+// empty form shape — used for initialisation and after a successful sale is recorded
 const EMPTY_FORM = {
   equipmentId: '',
   quantitySold: 1,
@@ -18,20 +19,24 @@ export default function Sales() {
   const [saving, setSaving]       = useState(false);
   const [loading, setLoading]     = useState(true);
 
+  // load both sales history and equipment list in parallel
   const load = async () => {
     try {
       const [s, eq] = await Promise.all([getAllSales(), getAllEquipment()]);
       setSales(s);
       setEquipment(eq);
     } catch {
+      // show error state if API call fails
       setError('Failed to load data.');
     } finally {
       setLoading(false);
     }
   };
 
+  // fetch data on component mount
   useEffect(() => { load(); }, []);
 
+  // single handler for all form inputs — updates only the changed field
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -39,6 +44,21 @@ export default function Sales() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // validate input before making the API call — ensure equipment and quantity are set
+    if (!formData.equipmentId) {
+      setError('Please select an equipment item.');
+      return;
+    }
+    if (Number(formData.quantitySold) < 1) {
+      setError('Quantity sold must be at least 1.');
+      return;
+    }
+    if (!formData.saleDate) {
+      setError('Sale date is required.');
+      return;
+    }
+
     setSaving(true);
     setError('');
     setSuccess('');
@@ -52,15 +72,19 @@ export default function Sales() {
       });
       const eq = equipment.find(e => e.id === Number(formData.equipmentId));
       setSuccess(`Sale recorded: ${formData.quantitySold} unit(s) of "${eq?.name}".`);
+      // clear form after successful submission — ready for the next sale entry
       setFormData(EMPTY_FORM);
+      // reload to reflect updated available quantities in the equipment dropdown
       await load();
     } catch (err) {
+      // show error state if API call fails — e.g. insufficient stock
       setError(err.response?.data?.message ?? 'Failed to record sale.');
     } finally {
       setSaving(false);
     }
   };
 
+  // format a date string into a readable short date
   const fmt = (dateStr) => {
     if (!dateStr) return '—';
     return new Date(dateStr).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -78,7 +102,7 @@ export default function Sales() {
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.6fr', gap: '24px', marginTop: '24px' }}>
 
-        {/* ── Record Sale Form ── */}
+        {/* Record Sale Form */}
         <div className="form-container" style={{ maxWidth: '100%' }}>
           <h3 style={{ marginBottom: '16px', color: '#1a2c4e' }}>Record New Sale</h3>
           <form onSubmit={handleSubmit} className="form" style={{ marginTop: 0 }}>
@@ -87,6 +111,7 @@ export default function Sales() {
               <select id="equipmentId" name="equipmentId" value={formData.equipmentId}
                 onChange={handleChange} required>
                 <option value="">— Select equipment —</option>
+                {/* show available quantity next to name so user knows what can be sold */}
                 {equipment.map(eq => (
                   <option key={eq.id} value={eq.id}>
                     {eq.name} (Available: {eq.availableQuantity})
@@ -122,7 +147,7 @@ export default function Sales() {
           </form>
         </div>
 
-        {/* ── Sales History Table ── */}
+        {/* Sales History Table */}
         <div>
           <h3 style={{ marginBottom: '16px', color: '#1a2c4e' }}>Sales History</h3>
           {sales.length === 0 ? (

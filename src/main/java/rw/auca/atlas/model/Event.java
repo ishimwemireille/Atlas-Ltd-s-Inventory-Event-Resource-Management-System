@@ -26,25 +26,34 @@ public class Event {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  // validate event name is present before persisting
   @NotBlank(message = "Event name is required")
   @Column(nullable = false)
   private String name;
 
+  // venue is required — events must have a physical location
   @NotBlank(message = "Venue is required")
   @Column(nullable = false)
   private String venue;
 
+  // event date is mandatory — used for scheduling and calendar view
   @NotNull(message = "Event date is required")
   @Column(nullable = false)
   private LocalDate eventDate;
 
   private String description;
 
+  // client details are optional — recorded for contact and billing purposes
+  private String clientName;
+  private String clientPhone;
+  private String clientEmail;
+
+  // default status is PLANNED when an event is first created
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   private EventStatus status = EventStatus.PLANNED;
 
-  // Excluded from JSON — allocations are fetched separately via GET /api/allocations/event/{id}
+  // excluded from JSON — allocations are fetched separately via GET /api/allocations/event/{id}
   @JsonIgnore
   @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<EquipmentAllocation> allocations = new ArrayList<>();
@@ -67,6 +76,15 @@ public class Event {
 
   public String getDescription() { return description; }
   public void setDescription(String description) { this.description = description; }
+
+  public String getClientName() { return clientName; }
+  public void setClientName(String clientName) { this.clientName = clientName; }
+
+  public String getClientPhone() { return clientPhone; }
+  public void setClientPhone(String clientPhone) { this.clientPhone = clientPhone; }
+
+  public String getClientEmail() { return clientEmail; }
+  public void setClientEmail(String clientEmail) { this.clientEmail = clientEmail; }
 
   public EventStatus getStatus() { return status; }
   public void setStatus(EventStatus status) { this.status = status; }

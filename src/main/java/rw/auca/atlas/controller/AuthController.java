@@ -23,9 +23,11 @@ import rw.auca.atlas.service.AtlasUserDetailsService;
 @CrossOrigin(origins = "http://localhost:5173")
 public class AuthController {
 
+  // constructor injection — avoids field injection for testability and immutability
   private final AuthenticationManager authenticationManager;
   private final AtlasUserDetailsService userDetailsService;
   private final JwtUtil jwtUtil;
+  // REPOSITORY PATTERN: fetch the User entity to read role after authentication
   private final UserRepository userRepository;
 
   public AuthController(
@@ -49,15 +51,19 @@ public class AuthController {
   @PostMapping("/login")
   public ResponseEntity<?> login(@RequestBody LoginRequest request) {
     try {
+      // validate credentials against the stored BCrypt hash via Spring Security
       authenticationManager.authenticate(
           new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
     } catch (BadCredentialsException exception) {
+      // reject request early — return 401 without leaking which field was wrong
       return ResponseEntity.status(401).body("Invalid username or password.");
     }
 
+    // credentials are valid — generate a signed JWT for the client
     UserDetails userDetails = userDetailsService.loadUserByUsername(request.getUsername());
     String token = jwtUtil.generateToken(userDetails);
 
+    // resolve the current logged-in user from the repository to include role in the response
     User user = userRepository.findByUsername(request.getUsername()).orElseThrow();
     return ResponseEntity.ok(new AuthResponse(token, user.getUsername(), user.getRole().name()));
   }

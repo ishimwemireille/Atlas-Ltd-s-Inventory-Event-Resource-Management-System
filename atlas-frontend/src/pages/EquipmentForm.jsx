@@ -7,12 +7,14 @@ import {
   getAllCategories,
 } from '../api/apiService.js';
 
+// empty form shape — used both for initialisation and after a successful create
 const EMPTY_FORM = {
   name: '',
   description: '',
   categoryId: '',
   totalQuantity: '',
   availableQuantity: '',
+  sellingPricePerUnit: '',
   status: 'IN_STOCK',
 };
 
@@ -26,6 +28,7 @@ export default function EquipmentForm() {
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
+  // fetch data on component mount — load categories and, if editing, the existing equipment
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -33,6 +36,7 @@ export default function EquipmentForm() {
         setCategories(cats);
 
         if (isEditing) {
+          // populate form with existing values when editing
           const equipment = await getEquipmentById(id);
           setFormData({
             name: equipment.name,
@@ -40,16 +44,19 @@ export default function EquipmentForm() {
             categoryId: equipment.category?.id ?? '',
             totalQuantity: equipment.totalQuantity,
             availableQuantity: equipment.availableQuantity,
+            sellingPricePerUnit: equipment.sellingPricePerUnit ?? '',
             status: equipment.status,
           });
         }
       } catch (err) {
+        // show error state if API call fails
         setError('Failed to load data.');
       }
     };
     loadData();
   }, [id, isEditing]);
 
+  // single handler for all text/select/number inputs — updates only the changed field
   const handleChange = (event) => {
     const { name, value } = event.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -57,15 +64,32 @@ export default function EquipmentForm() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    // validate input before making the API call — check required fields are not empty
+    if (!formData.name.trim()) {
+      setError('Equipment name is required.');
+      return;
+    }
+    if (!formData.categoryId) {
+      setError('Please select a category.');
+      return;
+    }
+    if (formData.totalQuantity === '' || formData.availableQuantity === '') {
+      setError('Total and available quantities are required.');
+      return;
+    }
+
     setSaving(true);
     setError('');
 
+    // build the API payload — convert string inputs to proper types
     const payload = {
       name: formData.name,
       description: formData.description,
       category: formData.categoryId ? { id: Number(formData.categoryId) } : null,
       totalQuantity: Number(formData.totalQuantity),
       availableQuantity: Number(formData.availableQuantity),
+      sellingPricePerUnit: formData.sellingPricePerUnit ? Number(formData.sellingPricePerUnit) : null,
       status: formData.status,
     };
 
@@ -75,8 +99,10 @@ export default function EquipmentForm() {
       } else {
         await createEquipment(payload);
       }
+      // navigate back to the list after successful save
       navigate('/equipment');
     } catch (err) {
+      // show error state if API call fails — e.g. validation error from the backend
       setError(err.response?.data?.message ?? 'Failed to save equipment.');
     } finally {
       setSaving(false);
@@ -158,15 +184,18 @@ export default function EquipmentForm() {
           </div>
         </div>
 
+        <div className="form-group">
+          <label htmlFor="sellingPricePerUnit">Selling Price per Unit (RWF)</label>
+          <input id="sellingPricePerUnit" name="sellingPricePerUnit" type="number" min="0" step="100"
+            value={formData.sellingPricePerUnit} onChange={handleChange}
+            placeholder="e.g. 500000" />
+        </div>
+
+        {/* status selector only shown when editing — new equipment always starts as IN_STOCK */}
         {isEditing && (
           <div className="form-group">
             <label htmlFor="status">Status</label>
-            <select
-              id="status"
-              name="status"
-              value={formData.status}
-              onChange={handleChange}
-            >
+            <select id="status" name="status" value={formData.status} onChange={handleChange}>
               <option value="IN_STOCK">In Stock</option>
               <option value="RESERVED">Reserved</option>
               <option value="DEPLOYED">Deployed</option>

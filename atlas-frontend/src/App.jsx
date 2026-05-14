@@ -14,6 +14,7 @@ import AllocationList from './pages/AllocationList.jsx';
 import UserManagement from './pages/UserManagement.jsx';
 import Reports from './pages/Reports.jsx';
 import Sales from './pages/Sales.jsx';
+import AuditLog from './pages/AuditLog.jsx';
 
 export default function App() {
   return (
@@ -39,6 +40,8 @@ export default function App() {
                     <Route path="/allocations/event/:eventId" element={<AllocationList />} />
                     <Route path="/users" element={<UserManagement />} />
                     <Route path="/sales" element={<Sales />} />
+
+                    <Route path="/audit-log" element={<AuditLog />} />
                     <Route path="/reports" element={<Reports />} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>

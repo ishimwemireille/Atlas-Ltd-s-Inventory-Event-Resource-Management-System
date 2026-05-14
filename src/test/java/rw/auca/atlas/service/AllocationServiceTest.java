@@ -46,6 +46,7 @@ class AllocationServiceTest {
   @Mock private EquipmentRepository equipmentRepository;
   @Mock private EventRepository eventRepository;
   @Mock private ApplicationEventPublisher eventPublisher;
+  @Mock private rw.auca.atlas.service.AuditLogService auditLogService;
 
   @InjectMocks
   private AllocationService allocationService;
@@ -74,7 +75,7 @@ class AllocationServiceTest {
   @Test
   @DisplayName("STATE PATTERN: allocate() reserves equipment and sets status to RESERVED when all stock taken")
   void allocate_allStock_setsStatusReserved() {
-    allocationService.allocate(1L, 1L, 6);
+    allocationService.allocate(1L, 1L, 6, null);
 
     assertEquals(0, equipment.getAvailableQuantity());
     assertEquals(EquipmentStatus.RESERVED, equipment.getStatus());
@@ -83,7 +84,7 @@ class AllocationServiceTest {
   @Test
   @DisplayName("STATE PATTERN: allocate() leaves status IN_STOCK when some stock remains")
   void allocate_partialStock_remainsInStock() {
-    allocationService.allocate(1L, 1L, 4);
+    allocationService.allocate(1L, 1L, 4, null);
 
     assertEquals(2, equipment.getAvailableQuantity());
     assertEquals(EquipmentStatus.IN_STOCK, equipment.getStatus());
@@ -94,7 +95,7 @@ class AllocationServiceTest {
   void allocate_exceedsStock_throwsException() {
     assertThrows(
         InsufficientStockException.class,
-        () -> allocationService.allocate(1L, 1L, 10)
+        () -> allocationService.allocate(1L, 1L, 10, null)
     );
     verify(allocationRepository, never()).save(any());
   }
@@ -119,7 +120,7 @@ class AllocationServiceTest {
     EquipmentAllocation allocation = buildAllocation(AllocationStatus.DEPLOYED);
     when(allocationRepository.findById(1L)).thenReturn(Optional.of(allocation));
 
-    allocationService.returnEquipment(1L);
+    allocationService.returnEquipment(1L, rw.auca.atlas.model.ReturnCondition.GOOD, null);
 
     assertEquals(3, equipment.getAvailableQuantity());
     assertEquals(EquipmentStatus.IN_STOCK, equipment.getStatus());
@@ -133,7 +134,7 @@ class AllocationServiceTest {
   void allocate_stockAt2_publishesLowStockEvent() {
     equipment.setAvailableQuantity(4);
 
-    allocationService.allocate(1L, 1L, 2);
+    allocationService.allocate(1L, 1L, 2, null);
 
     ArgumentCaptor<LowStockEvent> captor = ArgumentCaptor.forClass(LowStockEvent.class);
     verify(eventPublisher).publishEvent(captor.capture());
@@ -145,7 +146,7 @@ class AllocationServiceTest {
   void allocate_stockBelow2_publishesLowStockEvent() {
     equipment.setAvailableQuantity(3);
 
-    allocationService.allocate(1L, 1L, 2);
+    allocationService.allocate(1L, 1L, 2, null);
 
     verify(eventPublisher).publishEvent(any(LowStockEvent.class));
   }
@@ -155,7 +156,7 @@ class AllocationServiceTest {
   void allocate_stockAbove2_doesNotPublishEvent() {
     equipment.setAvailableQuantity(6);
 
-    allocationService.allocate(1L, 1L, 1);
+    allocationService.allocate(1L, 1L, 1, null);
 
     verify(eventPublisher, never()).publishEvent(any());
   }
@@ -168,7 +169,7 @@ class AllocationServiceTest {
     when(equipmentRepository.findById(99L)).thenReturn(Optional.empty());
 
     assertThrows(ResourceNotFoundException.class,
-        () -> allocationService.allocate(1L, 99L, 1));
+        () -> allocationService.allocate(1L, 99L, 1, null));
   }
 
   @Test
@@ -177,7 +178,7 @@ class AllocationServiceTest {
     when(eventRepository.findById(99L)).thenReturn(Optional.empty());
 
     assertThrows(ResourceNotFoundException.class,
-        () -> allocationService.allocate(99L, 1L, 1));
+        () -> allocationService.allocate(99L, 1L, 1, null));
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────

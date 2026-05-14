@@ -10,6 +10,9 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 /** Represents an internal system user — credentials are issued by an Admin, no self-registration. */
 @Entity
@@ -20,16 +23,25 @@ public class User {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  // validate that username is present and non-blank before persisting
+  @NotBlank(message = "Username is required")
   @Column(nullable = false, unique = true)
   private String username;
 
+  // validate email format — stored as unique constraint in DB
+  @NotBlank(message = "Email is required")
+  @Email(message = "Email must be a valid address")
   @Column(nullable = false, unique = true)
   private String email;
 
+  // write-only: excluded from JSON responses — never expose the hashed password
+  @NotBlank(message = "Password is required")
   @JsonProperty(access = Access.WRITE_ONLY)
   @Column(nullable = false)
   private String password;
 
+  // role must never be null — defaults to STAFF for ordinary accounts
+  @NotNull(message = "Role is required")
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   private UserRole role = UserRole.STAFF;

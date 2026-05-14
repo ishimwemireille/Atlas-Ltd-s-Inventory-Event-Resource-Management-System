@@ -65,6 +65,10 @@ public class EventService {
     existing.setEventDate(updated.getEventDate());
     existing.setDescription(updated.getDescription());
     existing.setStatus(updated.getStatus());
+    // update client contact fields — may be null if not provided
+    existing.setClientName(updated.getClientName());
+    existing.setClientPhone(updated.getClientPhone());
+    existing.setClientEmail(updated.getClientEmail());
     return eventRepository.save(existing);
   }
 

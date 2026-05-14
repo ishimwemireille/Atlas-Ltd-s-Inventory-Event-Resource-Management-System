@@ -9,11 +9,13 @@ export default function AllocationForm() {
   const [selectedEventId, setSelectedEventId] = useState('');
   const [selectedEquipmentId, setSelectedEquipmentId] = useState('');
   const [quantity, setQuantity] = useState(1);
+  const [rentalPricePerUnit, setRentalPricePerUnit] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
 
+  // fetch data on component mount — both events and equipment are needed to populate dropdowns
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -24,18 +26,31 @@ export default function AllocationForm() {
         setEvents(eventsData);
         setEquipmentList(equipmentData);
       } catch (err) {
+        // show error state if API call fails
         setError('Failed to load data. Is the backend running?');
       }
     };
     loadData();
   }, []);
 
+  // derive selected equipment details for inline stock display
   const selectedEquipment = equipmentList.find(
     (item) => item.id === Number(selectedEquipmentId)
   );
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    // validate input before making the API call — ensure selections are complete
+    if (!selectedEventId || !selectedEquipmentId) {
+      setError('Please select both an event and a piece of equipment.');
+      return;
+    }
+    if (Number(quantity) < 1) {
+      setError('Quantity must be at least 1.');
+      return;
+    }
+
     setSaving(true);
     setError('');
     setSuccess('');
@@ -43,12 +58,16 @@ export default function AllocationForm() {
       await allocateEquipment(
         Number(selectedEventId),
         Number(selectedEquipmentId),
-        Number(quantity)
+        Number(quantity),
+        rentalPricePerUnit ? Number(rentalPricePerUnit) : null
       );
       setSuccess('Equipment reserved successfully!');
+      // clear form after successful submission — ready for the next allocation
       setSelectedEquipmentId('');
       setQuantity(1);
+      setRentalPricePerUnit('');
     } catch (err) {
+      // show error state if API call fails — e.g. insufficient stock
       setError(err.response?.data?.message ?? 'Failed to allocate equipment.');
     } finally {
       setSaving(false);
@@ -58,9 +77,6 @@ export default function AllocationForm() {
   return (
     <div className="form-container">
       <h1 className="page-title">Allocate Equipment to Event</h1>
-      <p className="page-subtitle">
-        Reserving equipment triggers the <strong>State Pattern</strong>: IN_STOCK → RESERVED
-      </p>
 
       {error && <div className="error-message">{error}</div>}
       {success && <div className="success-message">{success}</div>}
@@ -96,6 +112,7 @@ export default function AllocationForm() {
               <option
                 key={item.id}
                 value={item.id}
+                // disable equipment with no available stock — prevents invalid submissions
                 disabled={item.availableQuantity === 0}
               >
                 {item.name} — Available: {item.availableQuantity}
@@ -103,6 +120,7 @@ export default function AllocationForm() {
             ))}
           </select>
 
+          {/* show live stock info for the selected equipment */}
           {selectedEquipment && (
             <div className="equipment-info">
               <StatusBadge status={selectedEquipment.status} />
@@ -126,6 +144,25 @@ export default function AllocationForm() {
           />
         </div>
 
+        <div className="form-group">
+          <label htmlFor="rentalPricePerUnit">Rental Price per Unit (RWF)</label>
+          <input
+            id="rentalPricePerUnit"
+            type="number"
+            min="0"
+            step="100"
+            value={rentalPricePerUnit}
+            onChange={(e) => setRentalPricePerUnit(e.target.value)}
+            placeholder="e.g. 50000 (optional)"
+          />
+          {/* hint the rental rate relative to the equipment's base selling price */}
+          {selectedEquipment?.sellingPricePerUnit && (
+            <small style={{ color: '#666', marginTop: '4px', display: 'block' }}>
+              Selling price: RWF {Number(selectedEquipment.sellingPricePerUnit).toLocaleString()} — rental price may differ
+            </small>
+          )}
+        </div>
+
         <div className="form-actions">
           <button type="submit" className="btn btn-primary" disabled={saving}>
             {saving ? 'Reserving...' : 'Reserve Equipment'}
@@ -133,6 +170,7 @@ export default function AllocationForm() {
         </div>
       </form>
 
+      {/* quick navigation to view existing allocations for the selected event */}
       {selectedEventId && (
         <div style={{ marginTop: '24px' }}>
           <button

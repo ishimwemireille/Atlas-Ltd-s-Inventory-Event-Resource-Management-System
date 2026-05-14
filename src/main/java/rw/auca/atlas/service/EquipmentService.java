@@ -9,14 +9,17 @@ import rw.auca.atlas.repository.EquipmentRepository;
 
 /** Service layer for Equipment CRUD operations and low-stock queries. */
 @Service
+// @Transactional on the class level wraps every public method in a DB transaction
 @Transactional
 public class EquipmentService {
 
+  // named constant — avoids magic number scattered across multiple call sites
   private static final int LOW_STOCK_THRESHOLD = 2;
 
-  // REPOSITORY PATTERN: data access abstraction
+  // REPOSITORY PATTERN: delegate all DB access through JPA repository interface
   private final EquipmentRepository equipmentRepository;
 
+  // constructor injection — avoids field injection for testability and immutability
   public EquipmentService(EquipmentRepository equipmentRepository) {
     this.equipmentRepository = equipmentRepository;
   }
@@ -38,6 +41,7 @@ public class EquipmentService {
    * @throws ResourceNotFoundException if no equipment with that ID exists
    */
   public Equipment findById(Long id) {
+    // validate input before hitting the database — throw 404 if not found
     return equipmentRepository.findById(id)
         .orElseThrow(() -> new ResourceNotFoundException("Equipment not found with id: " + id));
   }
@@ -49,6 +53,7 @@ public class EquipmentService {
    * @return the saved equipment with generated ID
    */
   public Equipment save(Equipment equipment) {
+    // @Valid on the controller ensures constraints are checked before this is called
     return equipmentRepository.save(equipment);
   }
 
@@ -61,12 +66,15 @@ public class EquipmentService {
    * @throws ResourceNotFoundException if no equipment with that ID exists
    */
   public Equipment update(Long id, Equipment updated) {
+    // load existing record first — prevents creating a new row with a supplied ID
     Equipment existing = findById(id);
     existing.setName(updated.getName());
     existing.setDescription(updated.getDescription());
     existing.setCategory(updated.getCategory());
     existing.setTotalQuantity(updated.getTotalQuantity());
     existing.setAvailableQuantity(updated.getAvailableQuantity());
+    // update selling price — may be null if not set
+    existing.setSellingPricePerUnit(updated.getSellingPricePerUnit());
     existing.setStatus(updated.getStatus());
     return equipmentRepository.save(existing);
   }
@@ -78,6 +86,7 @@ public class EquipmentService {
    * @throws ResourceNotFoundException if no equipment with that ID exists
    */
   public void delete(Long id) {
+    // validate input before hitting the database — fail fast if record does not exist
     if (!equipmentRepository.existsById(id)) {
       throw new ResourceNotFoundException("Equipment not found with id: " + id);
     }
@@ -90,6 +99,7 @@ public class EquipmentService {
    * @return list of low-stock equipment
    */
   public List<Equipment> findLowStock() {
+    // LOW_STOCK_THRESHOLD named constant avoids a magic number here
     return equipmentRepository.findByAvailableQuantityLessThanEqual(LOW_STOCK_THRESHOLD);
   }
 }
